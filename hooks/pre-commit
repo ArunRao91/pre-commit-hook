@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Function to identify changes to the 'collect_metrics' function in the commit
+function identify_changes() {
+    # Use 'git diff' to get the changes introduced by the commit
+    # We'll search for changes related to the 'collect_metrics' function
+    git diff --cached | grep -E '^\+(?!.*collect_metrics).*$'  # Exclude lines containing 'collect_metrics'
+}
+
+# Function to replace the 'collect_metrics' function with its previous version
+function replace_collect_metrics() {
+    # Use 'git show' to get the previous version of the 'collect_metrics' function
+    previous_version=$(git show HEAD^:cpu_monitor.py | sed -n '/def collect_metrics()/,/^$/p')
+
+    # Replace the current 'collect_metrics' function with its previous version
+    sed -i '/def collect_metrics()/,/^$/c\'"$previous_version" cpu_monitor.py
+}
+
+# Main script
+changes=$(identify_changes)
+
+# If changes related to the 'collect_metrics' function are detected
+if [[ -n $changes ]]; then
+    echo "Replacing 'collect_metrics' function with its previous version..."
+    replace_collect_metrics
+    # Add the modified file to the staging area
+    git add cpu_monitor.py
+fi
+
+exit 0
